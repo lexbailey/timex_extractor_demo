@@ -1,9 +1,10 @@
 <html>
     <head>
+         <meta charset="UTF-8">
         <title>Timex finder</title>
         <script src="brython.js"></script>
         <script src="brython_stdlib.js"></script>
-        <script type="text/python" class="webworker" id="worker" src="worker.py" pythonpath='https://danieljabailey.github.io/timex_extractor_demo/Lib'b></script>
+        <script type="text/python" class="webworker" id="worker" src="worker.py"></script>
         <style type='text/css'>
             div{
                 margin-top:0;
@@ -26,11 +27,19 @@
                 margin-bottom:0;
                 font-size:0.8em;
             }
+            div.outtext{float:left;}
+            div.loadspin{float:right;}
         </style>
     </head>
-    <body onload="brython({pythonpath:['https://danieljabailey.github.io/timex_extractor_demo/Lib/site-packages']})" style="font-family:sans-serif">
+    <body onload="brython()" style="font-family:sans-serif">
         <script type='text/javascript'>
-            tfworker = new Worker('worker.js');
+            if (typeof OffscreenCanvas == 'undefined'){
+                console.log("No OffscreenCanvas support");
+                tfworker = false;
+            }
+            else{
+                tfworker = new Worker('worker.js');
+            }
         </script>
         <script type="text/python3">
             from browser import worker as ww
@@ -44,7 +53,6 @@
             last_toks = []
 
             @bind(w, "message")
-            @bind(tfw, "message")
             def callback(m):
                 global running
                 c, *d = m.data
@@ -77,18 +85,10 @@
                     if document['text'].value.split(' ') != last_toks:
                         run_soon(None)
 
-            def show_result(result, toks, name):
+
+            def hide_spinner(name):
                 el = document[name+'-load']
                 el.style['display'] = 'none'
-                el = document[name]
-                el.innerHTML = ''
-                el.style['opacity'] = '1'
-                for tag, tok in zip(result, toks):
-                    new = document.createElement('span')
-                    new.innerText = tok + ' '
-                    if tag == 1:
-                        new.style = {'color':'#00ca00', 'font-weight':'bold'}
-                    el.appendChild(new)
 
             def show_spinner(name):
                 el = document[name+'-load']
@@ -100,21 +100,36 @@
                 if document['auto'].checked:
                     show_spinner(name)
 
-                
+            def show_result(result, toks, name):
+                hide_spinner(name)
+                el = document[name]
+                el.innerHTML = ''
+                el.style['opacity'] = '1'
+                for tag, tok in zip(result, toks):
+                    new = document.createElement('span')
+                    new.innerText = tok + ' '
+                    if tag == 1:
+                        new.style = {'color':'#00ca00', 'font-weight':'bold'}
+                    el.appendChild(new)
 
             def run():
-                global running
+                global running, done
                 if running:
                     return
                 running = True
+                done = [False, False, False]
                 toks = document["text"].value.split(" ")
                 w.send(('run', toks))
-                tfw.postMessage(['run', toks])
+                if tfw:
+                    tfw.postMessage(['run', toks])
+                else:
+                    done[2] = True
 
             def run_soon(ev):
                 hide_result('output1')
                 hide_result('output2')
-                hide_result('output3')
+                if tfw:
+                   hide_result('output3')
                 if document['auto'].checked:
                     global t
                     if t is not None:
@@ -125,8 +140,15 @@
                 if not document['auto'].checked:
                     show_spinner('output1')
                     show_spinner('output2')
-                    show_spinner('output3')
+                    if tfw:
+                        show_spinner('output3')
                     timer.set_timeout(run, 0)
+
+            if tfw:
+                bind(tfw, "message")(callback)
+            else:
+                document['unsupported'].style['display']='block'
+                hide_spinner('output3')
 
             run_soon(None)
         </script>
@@ -143,14 +165,21 @@
             <div class="methodname">Input text:</div>
             <input id="text" autofocus style='width:100%;margin-bottom:1em;font-size:1.5em;' value='The party started five minutes ago'>
             <div class="methodname">Regular expression pattern matcher:</div>
-            <div class="output" id="output1"></div>
-            <div class="loader" id="output1-load" style='display:none;'><img style='height:2em;float:right' src='loading.gif' /></div>
+            <div class="output">
+                <div class="outtext" id="output1"></div>
+                <div class="loadspin" id="output1-load"><img style='height:2em' src='loading.gif' /></div>
+            </div>
             <div class="methodname">Naive bayes classifier:</div>
-            <div class="output" id="output2"></div>
-            <div class="loader" id="output2-load" style='display:none;'><img style='height:2em;float:right' src='loading.gif' /></div>
+            <div class="output">
+                <div class="outtext" id="output2"></div>
+                <div class="loadspin" id="output2-load"><img style='height:2em' src='loading.gif' /></div>
+            </div>
             <div class="methodname">Deep neural network:</div>
-            <div class="output" id="output3"></div>
-            <div class="loader" id="output3-load" style='display:none;'><img style='height:2em;float:right' src='loading.gif' /></div>
+            <div class="output">
+                <div class="outtext" id="unsupported" style="color:red;display:none;">(Your browser doesn't support this. Try Chrome)</div>
+                <div class="outtext" id="output3"></div>
+                <div class="loadspin" id="output3-load"><img style='height:2em' src='loading.gif' /></div>
+            </div>
             <div>
                 <h2>What is this?</h2>
                 <p>It's a demo of three methods of extracting timex information from strings. All of the algorithms that do this are running in your browser. They were originally written in python, and so to avoid duplicating code (and having to potentially rewrite lots of regexes) the regex and bayes extractors run with brython (browser python, a python interpreter implemented in javascript). The deep NN model is running on tensorflowjs. The learning data came from tempeval2. The NN uses a pretrained word embedding from GloVe. Enjoy :)</p>
@@ -161,6 +190,7 @@
                 <p>Short answer; because the training data was lacking.</p>
                 <p>Longer answer; the bottom two algorithms are severly affected by a lack of training data. The regex based parser is not, but instead is far from perfect because it takes lots of human effort to make it good. It still outperforms the naive bayes classifier and usually keeps up with the deep nn (and in many cases is actually the only algorithm that gets everything right). The deep nn sometimes gives surprising results.</p>
             </div>
+
         </div>
     </body>
 </html>
