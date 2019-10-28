@@ -11,11 +11,11 @@
                 margin-bottom:1em;
             }
             div.output{
-                height:2em;
                 font-size:2em;
                 border:1px solid black;
                 padding-top: 0.7em;
                 padding-left: 0.7em;
+                padding-right: 0.7em;
             }
             div.loader{
                 position:relative;
@@ -27,8 +27,20 @@
                 margin-bottom:0;
                 font-size:0.8em;
             }
-            div.outtext{float:left;}
-            div.loadspin{float:right;}
+            div.outtext{
+                float:left;
+                margin-bottom:0;
+            }
+            div.loadspin{
+                float:right;
+                margin-bottom:0;
+                max-height:1em;
+            }
+            img.spin{
+                position: relative;
+                top: -0.3em;
+                height:2em;
+            }
         </style>
     </head>
     <body onload="brython()" style="font-family:sans-serif">
@@ -167,18 +179,21 @@
             <div class="methodname">Regular expression pattern matcher:</div>
             <div class="output">
                 <div class="outtext" id="output1"></div>
-                <div class="loadspin" id="output1-load"><img style='height:2em' src='loading.gif' /></div>
+                <div class="loadspin" id="output1-load"><img class="spin" src='loading.gif' /></div>
+                <div style='clear:both;'></div>
             </div>
             <div class="methodname">Naive bayes classifier:</div>
             <div class="output">
                 <div class="outtext" id="output2"></div>
-                <div class="loadspin" id="output2-load"><img style='height:2em' src='loading.gif' /></div>
+                <div class="loadspin" id="output2-load"><img class="spin" src='loading.gif' /></div>
+                <div style='clear:both;'></div>
             </div>
             <div class="methodname">Deep neural network:</div>
             <div class="output">
                 <div class="outtext" id="unsupported" style="color:red;display:none;">(Your browser doesn't support this. Try Chrome)</div>
                 <div class="outtext" id="output3"></div>
-                <div class="loadspin" id="output3-load"><img style='height:2em' src='loading.gif' /></div>
+                <div class="loadspin" id="output3-load"><img class="spin" src='loading.gif' /></div>
+                <div style='clear:both;'></div>
             </div>
             <div>
                 <h2>What is this?</h2>
