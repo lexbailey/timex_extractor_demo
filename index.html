@@ -154,6 +154,12 @@
             <div>
                 <h2>What is this?</h2>
                 <p>It's a demo of three methods of extracting timex information from strings. All of the algorithms that do this are running in your browser. They were originally written in python, and so to avoid duplicating code (and having to potentially rewrite lots of regexes) the regex and bayes extractors run with brython (browser python, a python interpreter implemented in javascript). The deep NN model is running on tensorflowjs. The learning data came from tempeval2. The NN uses a pretrained word embedding from GloVe. Enjoy :)</p>
+                <h2>Usage notes</h2>
+                <p>When "Rerun automatically while typing" is disabled, press enter to rerun.</p>
+                <p>Tokenisation is done by splitting on spaces, so you should prefer "Yesterday , today , and tomorrow ." over "Yesterday, today, and tomorrow."</p>
+                <h2>Why doesn't it work for "&lt;some sentence&gt;"?</h2>
+                <p>Short answer; because the training data was lacking.</p>
+                <p>Longer answer; the bottom two algorithms are severly affected by a lack of training data. The regex based parser is not, but instead is far from perfect because it takes lots of human effort to make it good. It still outperforms the naive bayes classifier and usually keeps up with the deep nn (and in many cases is actually the only algorithm that gets everything right). The deep nn sometimes gives surprising results.</p>
             </div>
         </div>
     </body>
