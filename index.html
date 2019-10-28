@@ -151,6 +151,10 @@
             <div class="methodname">Deep neural network:</div>
             <div class="output" id="output3"></div>
             <div class="loader" id="output3-load" style='display:none;'><img style='height:2em;float:right' src='loading.gif' /></div>
+            <div>
+                <h2>What is this?</h2>
+                <p>It's a demo of three methods of extracting timex information from strings. All of the algorithms that do this are running in your browser. They were originally written in python, and so to avoid duplicating code (and having to potentially rewrite lots of regexes) the regex and bayes extractors run with brython (browser python, a python interpreter implemented in javascript). The deep NN model is running on tensorflowjs. The learning data came from tempeval2. The NN uses a pretrained word embedding from GloVe. Enjoy :)</p>
+            </div>
         </div>
     </body>
 </html>
