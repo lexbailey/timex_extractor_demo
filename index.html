@@ -1,0 +1,156 @@
+<html>
+    <head>
+        <title>Timex finder</title>
+        <script src="brython.js"></script>
+        <script src="brython_stdlib.js"></script>
+        <script type="text/python" class="webworker" id="worker" src="worker.py"></script>
+        <style type='text/css'>
+            div{
+                margin-top:0;
+                margin-bottom:1em;
+            }
+            div.output{
+                height:2em;
+                font-size:2em;
+                border:1px solid black;
+                padding-top: 0.7em;
+                padding-left: 0.7em;
+            }
+            div.loader{
+                position:relative;
+                top: -3.38em;
+                height:2em;
+                font-size:2em;
+            }
+            div.methodname{
+                margin-bottom:0;
+                font-size:0.8em;
+            }
+        </style>
+    </head>
+    <body onload="brython()" style="font-family:sans-serif">
+        <script type='text/javascript'>
+            tfworker = new Worker('worker.js');
+        </script>
+        <script type="text/python3">
+            from browser import worker as ww
+            from browser import document, alert, timer, window, bind
+            w = ww.Worker('worker')
+            tfw = window.tfworker
+
+            t = None
+            running = False
+            done = [False, False, False]
+            last_toks = []
+
+            @bind(w, "message")
+            @bind(tfw, "message")
+            def callback(m):
+                global running
+                c, *d = m.data
+                if c == 'loaded':
+                    document["text"].bind("input", run_soon)
+                    document["text"].bind("change", run_manual)
+                    document["loading_screen"].style['display'] = 'none'
+                    document["content"].style['display'] = 'block'
+                elif c == 'regex':
+                    toks, result = d
+                    show_result(result, toks, 'output1')
+                    last_toks = toks
+                    done[0] = True
+                elif c == 'bayes':
+                    toks, result = d
+                    show_result(result, toks, 'output2')
+                    last_toks = toks
+                    done[1] = True
+                elif c == 'nn':
+                    toks, result = d
+                    show_result(result, toks, 'output3')
+                    last_toks = toks
+                    done[2] = True
+                else:
+                    print("unknown message")
+                    print(c)
+                    print(d)
+                if all(done):
+                    running = False
+                    if document['text'].value.split(' ') != last_toks:
+                        run_soon(None)
+
+            def show_result(result, toks, name):
+                el = document[name+'-load']
+                el.style['display'] = 'none'
+                el = document[name]
+                el.innerHTML = ''
+                el.style['opacity'] = '1'
+                for tag, tok in zip(result, toks):
+                    new = document.createElement('span')
+                    new.innerText = tok + ' '
+                    if tag == 1:
+                        new.style = {'color':'#00ca00', 'font-weight':'bold'}
+                    el.appendChild(new)
+
+            def show_spinner(name):
+                el = document[name+'-load']
+                el.style['display'] = 'inline'
+
+            def hide_result(name):
+                el = document[name]
+                el.style['opacity'] = '0.2'
+                if document['auto'].checked:
+                    show_spinner(name)
+
+                
+
+            def run():
+                global running
+                if running:
+                    return
+                running = True
+                toks = document["text"].value.split(" ")
+                w.send(('run', toks))
+                tfw.postMessage(['run', toks])
+
+            def run_soon(ev):
+                hide_result('output1')
+                hide_result('output2')
+                hide_result('output3')
+                if document['auto'].checked:
+                    global t
+                    if t is not None:
+                        timer.clear_timeout(t)
+                    t = timer.set_timeout(run, 700)
+
+            def run_manual(ev):
+                if not document['auto'].checked:
+                    show_spinner('output1')
+                    show_spinner('output2')
+                    show_spinner('output3')
+                    timer.set_timeout(run, 0)
+
+            run_soon(None)
+        </script>
+        <div id="header" style='width:80%;margin:auto;'>
+            <h1>Timex finder</h1>
+            <p>A demonstration of three different methods of locating timexes in a sentence.</p>
+        </div>
+        <div id="loading_screen" style='width:80%;margin:auto;text-align:center'>
+            <p style='font-size:3em'>Loading...</p>
+            <img style='height:5em;' src='loading.gif' />
+        </div>
+        <div id="content" style='width:80%;margin:auto;display:none'>
+            <div style='float:right;display:inline'><input id='auto' type='checkbox' name='auto' checked/><label for='auto'>Rerun automatically while typing</label></div>
+            <div class="methodname">Input text:</div>
+            <input id="text" autofocus style='width:100%;margin-bottom:1em;font-size:1.5em;' value='The party started five minutes ago'>
+            <div class="methodname">Regular expression pattern matcher:</div>
+            <div class="output" id="output1"></div>
+            <div class="loader" id="output1-load" style='display:none;'><img style='height:2em;float:right' src='loading.gif' /></div>
+            <div class="methodname">Naive bayes classifier:</div>
+            <div class="output" id="output2"></div>
+            <div class="loader" id="output2-load" style='display:none;'><img style='height:2em;float:right' src='loading.gif' /></div>
+            <div class="methodname">Deep neural network:</div>
+            <div class="output" id="output3"></div>
+            <div class="loader" id="output3-load" style='display:none;'><img style='height:2em;float:right' src='loading.gif' /></div>
+        </div>
+    </body>
+</html>
