@@ -1,3 +1,5 @@
+import sys
+sys.path = ['https://danieljabailey.github.io/timex_extractor_demo/Lib']
 from browser import bind, self
 
 from regex_parser import find_timexes as re_find_timexes

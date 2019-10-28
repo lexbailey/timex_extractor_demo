@@ -3,7 +3,7 @@
         <title>Timex finder</title>
         <script src="brython.js"></script>
         <script src="brython_stdlib.js"></script>
-        <script type="text/python" class="webworker" id="worker" src="worker.py"></script>
+        <script type="text/python" class="webworker" id="worker" src="worker.py" pythonpath='https://danieljabailey.github.io/timex_extractor_demo/Lib'b></script>
         <style type='text/css'>
             div{
                 margin-top:0;
@@ -28,7 +28,7 @@
             }
         </style>
     </head>
-    <body onload="brython(pythonpath:['https://danieljabailey.github.io/timex_extractor_demo/Lib/'])" style="font-family:sans-serif">
+    <body onload="brython({pythonpath:['https://danieljabailey.github.io/timex_extractor_demo/Lib']})" style="font-family:sans-serif">
         <script type='text/javascript'>
             tfworker = new Worker('worker.js');
         </script>
