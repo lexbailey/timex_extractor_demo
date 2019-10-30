@@ -4,7 +4,8 @@
         <title>Timex finder</title>
         <script src="brython.js"></script>
         <script src="brython_stdlib.js"></script>
-        <script type="text/python" class="webworker" id="worker" src="worker.py"></script>
+        <script type="text/python" class="webworker" id="worker0" src="worker_regex.py"></script>
+        <script type="text/python" class="webworker" id="worker1" src="worker_bayes.py"></script>
         <style type='text/css'>
             div{
                 margin-top:0;
@@ -56,47 +57,44 @@
         <script type="text/python3">
             from browser import worker as ww
             from browser import document, alert, timer, window, bind
-            w = ww.Worker('worker')
-            tfw = window.tfworker
+            w0 = ww.Worker('worker0')
+            w1 = ww.Worker('worker1')
+            tfw = False
+            tfw_ = window.tfworker
+            if tfw_:
+                tfw_.send = tfw_.postMessage
+                tfw = tfw_
+
+            workers = [w0, w1, tfw]
 
             t = None
-            running = False
-            done = [False, False, False]
+            done = [True, True, True]
             last_toks = []
+            loaded = 0
 
-            @bind(w, "message")
             def callback(m):
-                global running
+                global done, loaded
                 c, *d = m.data
-                if c == 'loaded':
-                    document["text"].bind("input", run_soon)
-                    document["text"].bind("change", run_manual)
-                    document["loading_screen"].style['display'] = 'none'
-                    document["content"].style['display'] = 'block'
-                elif c == 'regex':
+                names = {'regex': 0, 'bayes': 1, 'nn': 2}
+                if c.startswith('loaded'):
+                    loaded += 1
+                    if loaded == 2:
+                        document["text"].bind("input", run_all)
+                        document["text"].bind("change", run_manual)
+                        document["loading_screen"].style['display'] = 'none'
+                        document["content"].style['display'] = 'block'
+                        run_all(None)
+                elif c in names:
+                    index = names[c]
                     toks, result = d
-                    show_result(result, toks, 'output1')
-                    last_toks = toks
-                    done[0] = True
-                elif c == 'bayes':
-                    toks, result = d
-                    show_result(result, toks, 'output2')
-                    last_toks = toks
-                    done[1] = True
-                elif c == 'nn':
-                    toks, result = d
-                    show_result(result, toks, 'output3')
-                    last_toks = toks
-                    done[2] = True
+                    show_result(result, toks, 'output%d' % (index+1))
+                    done[index] = True
+                    if document['text'].value.split(' ') != toks:
+                        run(index)
                 else:
                     print("unknown message")
                     print(c)
                     print(d)
-                if all(done):
-                    running = False
-                    if document['text'].value.split(' ') != last_toks:
-                        run_soon(None)
-
 
             def hide_spinner(name):
                 el = document[name+'-load']
@@ -124,37 +122,21 @@
                         new.style = {'color':'#00ca00', 'font-weight':'bold'}
                     el.appendChild(new)
 
-            def run():
-                global running, done
-                if running:
-                    return
-                running = True
-                done = [False, False, False]
+            def run(index):
+                global done
                 toks = document["text"].value.split(" ")
-                w.send(('run', toks))
-                if tfw:
-                    tfw.postMessage(['run', toks])
-                else:
-                    done[2] = True
-
-            def run_soon(ev):
-                hide_result('output1')
-                hide_result('output2')
-                if tfw:
-                   hide_result('output3')
-                if document['auto'].checked:
-                    global t
-                    if t is not None:
-                        timer.clear_timeout(t)
-                    t = timer.set_timeout(run, 700)
+                if done[index]:
+                    done[index] = False
+                    worker = workers[index]
+                    if worker:
+                        hide_result('output%d' % (index+1))
+                        worker.send(['run', toks])
+                    else:
+                        done[index] = True
 
             def run_manual(ev):
                 if not document['auto'].checked:
-                    show_spinner('output1')
-                    show_spinner('output2')
-                    if tfw:
-                        show_spinner('output3')
-                    timer.set_timeout(run, 0)
+                    pass # TODO
 
             if tfw:
                 bind(tfw, "message")(callback)
@@ -162,7 +144,15 @@
                 document['unsupported'].style['display']='block'
                 hide_spinner('output3')
 
-            run_soon(None)
+            bind(w0, "message")(callback)
+            bind(w1, "message")(callback)
+                    
+
+            def run_all(ev):
+                for i in range(3):
+                    run(i)
+
+            run_all(None)
         </script>
         <div id="header" style='width:80%;margin:auto;'>
             <h1>Timex finder</h1>
