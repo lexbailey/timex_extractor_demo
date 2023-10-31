@@ -1,5 +1,5 @@
 import sys
-sys.path.append('https://danieljabailey.github.io/timex_extractor_demo/Lib/site-packages')
+sys.path.append('https://lexbailey.github.io/timex_extractor_demo/Lib/site-packages')
 from browser import bind, self
 
 from bayes_extractor import find_timexes as bayes_find_timexes

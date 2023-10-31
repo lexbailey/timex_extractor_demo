@@ -4,4 +4,4 @@ This repository is a single web-page demo of three algorithms for extracting tim
 
 You can play around with it at the following link:
 
-https://danieljabailey.github.io/timex_extractor_demo/
+https://lexbailey.github.io/timex_extractor_demo/

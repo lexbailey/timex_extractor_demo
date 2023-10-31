@@ -1,5 +1,5 @@
 import sys
-sys.path.append('https://danieljabailey.github.io/timex_extractor_demo/Lib/site-packages')
+sys.path.append('https://lexbailey.github.io/timex_extractor_demo/Lib/site-packages')
 from browser import bind, self
 
 from regex_parser import find_timexes as re_find_timexes
